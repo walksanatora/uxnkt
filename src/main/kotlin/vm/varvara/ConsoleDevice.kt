@@ -25,7 +25,9 @@ class ConsoleDevice : Device() {
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     override fun writeByte(address: Byte, byte: Byte) {
+        //println("writted to console: %s addr: %s".format(byte.toHexString(),address.toHexString()))
         when(address.toInt()) {
             0x00 -> callbackVector = callbackVector.and(0x00FF).or(byte.toShort()) //CONSOLE
             0x01 -> callbackVector = callbackVector.and(0xFF0).or(byte.toShort().rotateLeft(8)) //CONSOLE

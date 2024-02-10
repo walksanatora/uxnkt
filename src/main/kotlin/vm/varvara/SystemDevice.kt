@@ -22,8 +22,8 @@ class SystemDevice(val uxn: Uxn) : Device() {
             0x00, 0x01, 0x0E -> backingBuffer[address.toInt()]
             0x02 -> readShort(address).toBytes().first                 //EXPANSION upper
             0x03 -> readShort((address-1).toByte()).toBytes().second //EXPANSION lower
-            0x04 -> uxn.ws.sp // working stack stack pointer
-            0x05 -> uxn.rs.sp // return stack stack pointer
+            0x04 -> uxn.ws.sp.toByte() // working stack stack pointer
+            0x05 -> uxn.rs.sp.toByte() // return stack stack pointer
             0x06 -> readShort(address).toBytes().first                  //METADATA upper
             0x07 -> readShort((address-1).toByte()).toBytes().second    //METADATA lower
             0x08 -> readShort(address).toBytes().first                  //Red upper
@@ -37,13 +37,15 @@ class SystemDevice(val uxn: Uxn) : Device() {
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     override fun writeByte(address: Byte, byte: Byte) {
+        //println("writing %s to %s system device".format(byte.toHexString(),address.toHexString()))
         when (address.toInt()) {
             0x00, 0x01 -> backingBuffer[address.toInt()] = byte
             0x02 -> lastExpansion = lastExpansion.and(0x00FF).or(byte.toShort())
             0x03 -> lastExpansion = lastExpansion.and(0xFF0).or(byte.toShort().rotateLeft(8))
-            0x04 -> uxn.ws.sp = byte
-            0x05 -> uxn.rs.sp = byte
+            0x04 -> uxn.ws.sp = byte.toShort()
+            0x05 -> uxn.rs.sp = byte.toShort()
             0x06 -> metadataLocation = metadataLocation.and(0x00FF).or(byte.toShort())
             0x07 -> metadataLocation = metadataLocation.and(0xFF0).or(byte.toShort().rotateLeft(8))
             0x08 -> sysRed = sysRed.and(0x00FF).or(byte.toShort())

@@ -1,5 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 group = 'net.walksanator.uxnkt'
@@ -11,11 +12,23 @@ repositories {
 
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    implementation shadow("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation shadow("com.google.code.gson:gson:2.10.1")
 }
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.walksanator.uxnkt.MainKt'
+    }
+}
+
+tasks.assemble.dependsOn shadowJar
 
 test {
     useJUnitPlatform()
 }
 kotlin {
     jvmToolchain(17)
+}
+shadowJar {
+    minimize()
 }

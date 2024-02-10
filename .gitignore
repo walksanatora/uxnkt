@@ -40,3 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+opctest.tal
+output.rom
+output.rom.sym

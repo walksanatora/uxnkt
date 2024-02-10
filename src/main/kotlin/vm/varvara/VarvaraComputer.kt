@@ -23,13 +23,8 @@ class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer() {
     override fun run() {
         while (fuel > 0) {
             val res = cpu.step()
-            if (res.isRight()) {
-                break // we throad up
-            }
-            if (res.isLeft()) {
-                if (res.left().get()) {
-                    break //we have broken out
-                }
+            if (res) {
+                break //CPU signaled no more instructions (BRK) so we exit
             }
             if (consumeFuel) {fuel -= 1}
         }
