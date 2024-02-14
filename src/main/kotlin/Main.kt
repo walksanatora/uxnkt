@@ -11,7 +11,7 @@ fun main(args: Array<String>) {
     val ram = ByteArray(0x10000)
     val rom = args.firstOrNull()?: run {
         System.setProperty("debug","")
-        "a.rom"
+        "output.rom"
     }
     val orom = Path("statdump")
     if (System.getProperty("debug")!=null) {
