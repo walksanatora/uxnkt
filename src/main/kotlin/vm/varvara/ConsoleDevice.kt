@@ -1,6 +1,6 @@
 package net.walksanator.uxnkt.vm.varvara
 
-import Device
+import net.walksanator.uxnkt.vm.Device
 import net.walksanator.uxnkt.vm.msbToShort
 import net.walksanator.uxnkt.vm.toBytes
 import kotlin.experimental.and
@@ -20,14 +20,13 @@ class ConsoleDevice : Device() {
             0x07 -> type
             0x08 -> write
             0x09 -> error
-            0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> backingBuffer[address.toInt()]
+            0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> super.readByte(address)
             else -> throw IllegalStateException("Unreachable Branch in net.walksanator.uxnkt.vm.varvara.ConsoleDevice#readByte")
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     override fun writeByte(address: Byte, byte: Byte) {
-        //println("writted to console: %s addr: %s".format(byte.toHexString(),address.toHexString()))
         when(address.toInt()) {
             0x00 -> callbackVector = callbackVector.and(0x00FF).or(byte.toShort()) //CONSOLE
             0x01 -> callbackVector = callbackVector.and(0xFF0).or(byte.toShort().rotateLeft(8)) //CONSOLE
@@ -38,7 +37,7 @@ class ConsoleDevice : Device() {
                 print(Char(byte.toInt()))
             }
             0x09 -> error = byte
-            0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> backingBuffer[address.toInt()] = byte
+            0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> super.writeByte(address, byte)
         }
     }
 

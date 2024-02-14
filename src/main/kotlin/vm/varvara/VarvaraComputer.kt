@@ -16,8 +16,8 @@ class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer() {
     var consumeFuel = true
 
     init {
-        cpu.devices[0] = Optional.of(system)
-        cpu.devices[1] = Optional.of(console)
+        cpu.devices[0] = system
+        cpu.devices[1] = console
     }
 
     override fun run() {

@@ -1,15 +1,12 @@
 package net.walksanator.uxnkt.vm
-import Device
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
 import java.nio.file.Path
 import java.util.*
-import javax.lang.model.type.ExecutableType
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.experimental.xor
 import kotlin.math.absoluteValue
-import kotlin.io.path.Path
 
 class WrappingByteArray(private val wrapped: ByteArray) {
      val size: Int
@@ -24,6 +21,15 @@ class WrappingByteArray(private val wrapped: ByteArray) {
 class Stack : Cloneable {
     @Expose var s = ByteArray(0x100) //stack
     @Expose var sp: Short = 0 //stack pointer
+        set(v) {
+            val mod = v % 256
+            val real = if (mod < 0) {
+                255+mod
+            } else {
+                mod
+            }
+            field = real.toShort()
+        }
     var spr: Short = 0
 
      public override fun clone(): Stack {
@@ -33,9 +39,9 @@ class Stack : Cloneable {
          new.spr = spr
          new.warp()
          return new
-    }
+     }
 
-    private fun warp() {
+    fun warp() {
          sp = (sp+spr).toShort()
          spr = 0
     }
@@ -112,7 +118,7 @@ class Uxn(val ram: WrappingByteArray) {
     var pc: Short = 0x100
     val ws = Stack() // Working net.walksanator.uxnkt.vm.Stack
     val rs = Stack() // Run net.walksanator.uxnkt.vm.Stack
-    var devices = Array<Optional<Device>>(16) { Optional.empty() }
+    var devices = Array<Device>(16) { Device() }
 
     val executionLog: MutableList<ExecutionState> = mutableListOf()
 
@@ -134,6 +140,15 @@ class Uxn(val ram: WrappingByteArray) {
         }
     }
 
+    fun captureFrame() {
+        executionLog.add(
+            ExecutionState(
+                pc,
+                ws.clone(),rs.clone(),ram.inner().clone()
+            )
+        )
+    }
+
     /**
      * steps VM execution by one instruction
      *
@@ -141,13 +156,7 @@ class Uxn(val ram: WrappingByteArray) {
      */
     fun step(): Boolean {
         if (System.getProperty("debug") != null) {
-            executionLog.add(
-                ExecutionState(
-                    pc,
-                    ws.clone(),rs.clone(),ram.inner().clone()
-                )
-            )
-
+            captureFrame()
         }
 
         val instruction = ram[pc]
@@ -159,6 +168,7 @@ class Uxn(val ram: WrappingByteArray) {
         val shortMode: Boolean = instruction.and(0b00100000).toInt() != 0
 
         val stack = if (returnMode) { rs } else { ws }
+        stack.warp()
 
         val maskedInstruction = if (immediate) {
             instruction //immediate instr
@@ -353,16 +363,16 @@ class Uxn(val ram: WrappingByteArray) {
             // GTH a b -- bool8
             0x0A -> {
                 if (shortMode) {
-                    val b = stack.popShort(keepMode)
-                    val a = stack.popShort(keepMode)
+                    val b = stack.popShort(keepMode).toUShort()
+                    val a = stack.popShort(keepMode).toUShort()
                     if (a>b) {
                         stack.pushByte(1)
                     } else {
                         stack.pushByte(0)
                     }
                 } else {
-                    val b = stack.popByte(keepMode)
-                    val a = stack.popByte(keepMode)
+                    val b = stack.popByte(keepMode).toUByte()
+                    val a = stack.popByte(keepMode).toUByte()
                     if (a>b) {
                         stack.pushByte(1)
                     } else {
@@ -373,16 +383,16 @@ class Uxn(val ram: WrappingByteArray) {
             // LTH a b -- bool8
             0x0B -> {
                 if (shortMode) {
-                    val b = stack.popShort(keepMode)
-                    val a = stack.popShort(keepMode)
+                    val b = stack.popShort(keepMode).toUShort()
+                    val a = stack.popShort(keepMode).toUShort()
                     if (a<b) {
                         stack.pushByte(1)
                     } else {
                         stack.pushByte(0)
                     }
                 } else {
-                    val b = stack.popByte(keepMode)
-                    val a = stack.popByte(keepMode)
+                    val b = stack.popByte(keepMode).toUByte()
+                    val a = stack.popByte(keepMode).toUByte()
                     if (a<b) {
                         stack.pushByte(1)
                     } else {
@@ -479,7 +489,7 @@ class Uxn(val ram: WrappingByteArray) {
                     val value = stack.popShort(keepMode)
                     val lr = value.toBytes()
                     ram[pc + addr] = lr.first
-                    ram[(pc + addr + 1)%256] = lr.second
+                    ram[(pc + addr + 1)%0x10000] = lr.second
                 } else {
                     val value = stack.popByte(keepMode)
                     ram[pc + addr] = value
@@ -517,15 +527,12 @@ class Uxn(val ram: WrappingByteArray) {
                 val id = dev.and(0xF0.toByte()).rotateRight(4)
                 val port = dev.and(0x0F)
                 val device = devices[id.toInt()]
-                if (device.isPresent) {
-                    val devv = device.get()
-                    if (shortMode) {
-                        val value = devv.readShort(port)
-                        stack.pushShort(value)
-                    } else {
-                        val value = devv.readByte(port)
-                        stack.pushByte(value)
-                    }
+                if (shortMode) {
+                    val value = device.readShort(port)
+                    stack.pushShort(value)
+                } else {
+                    val value = device.readByte(port)
+                    stack.pushByte(value)
                 }
             }
             // DEO value device8 --
@@ -534,21 +541,12 @@ class Uxn(val ram: WrappingByteArray) {
                 val id = dev.and(0xF0.toByte()).rotateRight(4)
                 val port = dev.and(0x0F)
                 val device = devices[id.toInt()]
-                if (device.isPresent) {
-                    val devv = device.get()
-                    if (shortMode) {
-                        val value = stack.popShort(keepMode)
-                        devv.writeShort(port,value)
-                    } else {
-                        val value = stack.popByte(keepMode)
-                        devv.writeByte(port,value)
-                    }
+                if (shortMode) {
+                    val value = stack.popShort(keepMode)
+                    device.writeShort(port,value)
                 } else {
-                    if (shortMode) {
-                        stack.popShort(keepMode)
-                    } else {
-                        stack.popByte(keepMode)
-                    }
+                    val value = stack.popByte(keepMode)
+                    device.writeByte(port,value)
                 }
             }
             //#endregion
@@ -558,6 +556,11 @@ class Uxn(val ram: WrappingByteArray) {
                 if (shortMode) {
                     val b = stack.popShort(keepMode)
                     val a = stack.popShort(keepMode)
+                    println("ADD2 %s + %s = %s".format(
+                        a.toHexString(),
+                        b.toHexString(),
+                        (a+b).toShort().toHexString())
+                    )
                     stack.pushShort((a+b).toShort())
                 } else {
                     val b = stack.popByte(keepMode)
@@ -592,16 +595,16 @@ class Uxn(val ram: WrappingByteArray) {
             // DIV a b -- a/b
             0x1B -> {
                 if (shortMode) {
-                    val b = stack.popShort(keepMode)
-                    val a = stack.popShort(keepMode)
+                    val b = stack.popShort(keepMode).toUShort()
+                    val a = stack.popShort(keepMode).toUShort()
                     if (b.toInt() == 0) {
                         stack.pushShort(0)
                     } else {
                         stack.pushShort((a/b).toShort())
                     }
                 } else {
-                    val b = stack.popByte(keepMode)
-                    val a = stack.popByte(keepMode)
+                    val b = stack.popByte(keepMode).toUByte()
+                    val a = stack.popByte(keepMode).toUByte()
                     if (b.toInt() == 0) {
                         stack.pushByte(0)
                     } else {
@@ -650,16 +653,18 @@ class Uxn(val ram: WrappingByteArray) {
                 val shift = stack.popByte(keepMode)
                 val left = shift.and(0xF0.toByte()).rotateRight(4).toInt()
                 val right = shift.and(0x0F).toInt()
+                //println("SFT shift8: %s %s/%s".format(shift.toHexString(),left.toHexString(),right.toHexString()))
                 if (shortMode) {
-                    val a = stack.popShort(keepMode).toInt()
-                    val c = (a shl left) shl right
+                    val a = stack.popShort(keepMode).toUShort().toInt()
+                    val c = (a shr right).toShort().toInt() shl left
+                    //println("SFT2 a: %s c: %s".format(a.toShort().toHexString(),c.toShort().toHexString()))
                     stack.pushShort(c.toShort())
                 } else {
-                    val a = stack.popByte(keepMode).toInt()
-                    val c = (a shl left) shl right
+                    val a = stack.popByte(keepMode).toUByte().toInt()
+                    val c = (a shr right).toByte().toInt() shl left
+                    //println("SFT a: %s c: %s".format(a.toByte().toHexString(),c.toByte().toHexString()))
                     stack.pushByte(c.toByte())
                 }
-
             }
             else -> {throw IllegalStateException("Unreachable branch hit on instr %s masked: %s".format(instruction.toHexString(),maskedInstruction.toHexString()))}
             //#endregion

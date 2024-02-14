@@ -1,6 +1,6 @@
 package net.walksanator.uxnkt.vm.varvara
 
-import Device
+import net.walksanator.uxnkt.vm.Device
 import net.walksanator.uxnkt.vm.Uxn
 import net.walksanator.uxnkt.vm.msbToShort
 import net.walksanator.uxnkt.vm.toBytes
@@ -19,7 +19,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
 
     override fun readByte(address: Byte): Byte {
         return when (address.toInt()) {
-            0x00, 0x01, 0x0E -> backingBuffer[address.toInt()]
+            0x00, 0x01, 0x0E -> super.readByte(address)
             0x02 -> readShort(address).toBytes().first                 //EXPANSION upper
             0x03 -> readShort((address-1).toByte()).toBytes().second //EXPANSION lower
             0x04 -> uxn.ws.sp.toByte() // working stack stack pointer
@@ -41,7 +41,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
     override fun writeByte(address: Byte, byte: Byte) {
         //println("writing %s to %s system device".format(byte.toHexString(),address.toHexString()))
         when (address.toInt()) {
-            0x00, 0x01 -> backingBuffer[address.toInt()] = byte
+            0x00, 0x01 -> super.writeByte(address, byte)
             0x02 -> lastExpansion = lastExpansion.and(0x00FF).or(byte.toShort())
             0x03 -> lastExpansion = lastExpansion.and(0xFF0).or(byte.toShort().rotateLeft(8))
             0x04 -> uxn.ws.sp = byte.toShort()
@@ -54,7 +54,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
             0x0B -> sysGreen = sysGreen.and(0xFF0).or(byte.toShort().rotateLeft(8))
             0x0C -> sysBlue = sysBlue.and(0x00FF).or(byte.toShort())
             0x0D -> sysBlue = sysBlue.and(0xFF0).or(byte.toShort().rotateLeft(8))
-            0x0E -> {/*TODO: print debugging info*/}
+            0x0E -> super.writeByte(address, byte)/*TODO: print debugging info*/
             0x0F -> state = byte
         }
     }
@@ -76,7 +76,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
             0x0C -> sysBlue
             0x0D -> readByte(address).msbToShort(readByte(0x0E))
             0x0E -> readByte(address).msbToShort(readByte(0x0F))
-            0x0F -> readByte(address).msbToShort(0x0000)
+            0x0F -> readByte(address).msbToShort(readByte(0x00))
             else -> {throw IllegalStateException("Unreachable arm in net.walksanator.uxnkt.vm.varvara.SystemDevice#readShort")}
         }
     }
@@ -98,7 +98,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
             0x0C -> sysBlue = short
             0x0D -> { val part = short.toBytes(); writeByte(address,part.first);writeByte(0x0E,part.second) }
             0x0E -> { val part = short.toBytes(); writeByte(address,part.first);writeByte(0x0F,part.second) }
-            0x0F -> writeByte(address,short.toBytes().first)
+            0x0F -> { val part = short.toBytes(); writeByte(address,part.first);writeByte(0x00,part.second) }
             else -> {throw IllegalStateException("Unreachable arm in net.walksanator.uxnkt.vm.varvara.SystemDevice#readShort")}
         }
     }
