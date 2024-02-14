@@ -41,6 +41,12 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-opctest.tal
-output.rom
-output.rom.sym
+statdump/**
+statdump/*
+statdump/
+
+final_frame.json
+
+*.rom
+*.rom.sym
+*.tal

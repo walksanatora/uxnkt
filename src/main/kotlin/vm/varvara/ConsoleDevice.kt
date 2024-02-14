@@ -14,8 +14,8 @@ class ConsoleDevice : Device() {
     var error: Byte = 0x00
     override fun readByte(address: Byte): Byte {
         return when (address.toInt()) {
-            0x00 -> readShort(0x00).toBytes().first  //CONSOLE callback vector upper half
-            0x01 -> readShort(0x00).toBytes().second //CONSOLE callback vector lower half
+            0x00 -> callbackVector.toBytes().first  //CONSOLE callback vector upper half
+            0x01 -> callbackVector.toBytes().second //CONSOLE callback vector lower half
             0x02 -> read
             0x07 -> type
             0x08 -> write
@@ -38,26 +38,6 @@ class ConsoleDevice : Device() {
             }
             0x09 -> error = byte
             0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> super.writeByte(address, byte)
-        }
-    }
-
-    override fun readShort(address: Byte): Short {
-       return when (address.toInt()) {
-           0x00 -> callbackVector
-           0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F ->
-               readByte(address).msbToShort(readByte((address+1).toByte()))
-           else -> throw IllegalStateException("Unreachable Branch in net.walksanator.uxnkt.vm.varvara.ConsoleDevice#readShort")
-       }
-    }
-
-    override fun writeShort(address: Byte, short: Short) {
-        val pair = short.toBytes()
-        when(address.toInt()) {
-            0x00 -> callbackVector = short
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> {
-                writeByte(address,pair.first)
-                writeByte((address+1).toByte(), pair.second)
-            }
         }
     }
 }

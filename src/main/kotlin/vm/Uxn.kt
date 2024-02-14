@@ -24,7 +24,7 @@ class Stack : Cloneable {
         set(v) {
             val mod = v % 256
             val real = if (mod < 0) {
-                255+mod
+                256+mod
             } else {
                 mod
             }
@@ -49,7 +49,7 @@ class Stack : Cloneable {
     fun popByte(sim: Boolean): Byte {
         if(sim){spr = (spr + 1).toShort()}
         sp = (sp - 1).toShort()
-        return s[(sp+1).toUByte().toInt()%256]
+        return s[sp%256]
     }
     fun popShort(sim: Boolean): Short {
         val lsb = popByte(sim)
@@ -59,8 +59,8 @@ class Stack : Cloneable {
 
     fun pushByte(byte: Byte) {
         warp()
-        sp = (sp + 1).toShort()
         s[(sp % 256).absoluteValue] = byte
+        sp = (sp + 1).toShort()
     }
     fun pushShort(short: Short) {
         val bytes = short.toBytes()
@@ -148,6 +148,8 @@ class Uxn(val ram: WrappingByteArray) {
             )
         )
     }
+
+    fun getDevice(addr: Byte): Device = devices[addr.and(0xF0.toByte()).rotateRight(4).toInt()]
 
     /**
      * steps VM execution by one instruction
@@ -524,13 +526,16 @@ class Uxn(val ram: WrappingByteArray) {
             // DEI device8 -- value
             0x16 -> {
                 val dev = stack.popByte(keepMode)
-                val id = dev.and(0xF0.toByte()).rotateRight(4)
                 val port = dev.and(0x0F)
-                val device = devices[id.toInt()]
                 if (shortMode) {
-                    val value = device.readShort(port)
+                    val udev = getDevice(dev)
+                    val ldevid = (dev+1).toByte()
+                    val lport = dev.and(0x0F)
+                    val ldev = getDevice(ldevid)
+                    val value = udev.readByte(port).msbToShort(ldev.readByte(lport))
                     stack.pushShort(value)
                 } else {
+                    val device = getDevice(dev)
                     val value = device.readByte(port)
                     stack.pushByte(value)
                 }
@@ -538,13 +543,17 @@ class Uxn(val ram: WrappingByteArray) {
             // DEO value device8 --
             0x17 -> {
                 val dev = stack.popByte(keepMode)
-                val id = dev.and(0xF0.toByte()).rotateRight(4)
                 val port = dev.and(0x0F)
-                val device = devices[id.toInt()]
                 if (shortMode) {
-                    val value = stack.popShort(keepMode)
-                    device.writeShort(port,value)
+                    val value = stack.popShort(keepMode).toBytes()
+                    val udev = getDevice(dev)
+                    val ldevid = (dev+1).toByte()
+                    val lport = dev.and(0x0F)
+                    val ldev = getDevice(ldevid)
+                    udev.writeByte(port,value.first)
+                    ldev.writeByte(lport,value.second)
                 } else {
+                    val device = getDevice(dev)
                     val value = stack.popByte(keepMode)
                     device.writeByte(port,value)
                 }
@@ -556,11 +565,11 @@ class Uxn(val ram: WrappingByteArray) {
                 if (shortMode) {
                     val b = stack.popShort(keepMode)
                     val a = stack.popShort(keepMode)
-                    println("ADD2 %s + %s = %s".format(
-                        a.toHexString(),
-                        b.toHexString(),
-                        (a+b).toShort().toHexString())
-                    )
+//                    println("ADD2 %s + %s = %s".format(
+//                        a.toHexString(),
+//                        b.toHexString(),
+//                        (a+b).toShort().toHexString())
+//                    )
                     stack.pushShort((a+b).toShort())
                 } else {
                     val b = stack.popByte(keepMode)
