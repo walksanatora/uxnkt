@@ -50,3 +50,7 @@ final_frame.json
 *.rom
 *.rom.sym
 *.tal
+
+uxn32/**
+uxn32/*
+uxn32/

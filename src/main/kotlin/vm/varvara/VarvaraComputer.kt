@@ -6,11 +6,13 @@ import java.util.*
 import java.util.function.Consumer
 import kotlin.collections.ArrayDeque
 
-class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer() {
-    val cpu = Uxn(ram)
+class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
 
     val system = SystemDevice(cpu)
     val console = ConsoleDevice()
+
+    val file1 = FileDevice()
+    val file2 = FileDevice()
 
     private val eventQueue: ArrayDeque<Pair<Short, Consumer<Computer>>> = ArrayDeque()
     var consumeFuel = true
@@ -18,6 +20,9 @@ class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer() {
     init {
         cpu.devices[0] = system
         cpu.devices[1] = console
+
+        cpu.devices[10] = file1
+        cpu.devices[11] = file2
     }
 
     override fun run() {

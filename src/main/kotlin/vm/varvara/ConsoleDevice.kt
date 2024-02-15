@@ -1,8 +1,6 @@
 package net.walksanator.uxnkt.vm.varvara
 
-import net.walksanator.uxnkt.vm.Device
-import net.walksanator.uxnkt.vm.msbToShort
-import net.walksanator.uxnkt.vm.toBytes
+import net.walksanator.uxnkt.vm.*
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -28,8 +26,8 @@ class ConsoleDevice : Device() {
     @OptIn(ExperimentalStdlibApi::class)
     override fun writeByte(address: Byte, byte: Byte) {
         when(address.toInt()) {
-            0x00 -> callbackVector = callbackVector.and(0x00FF).or(byte.toShort()) //CONSOLE
-            0x01 -> callbackVector = callbackVector.and(0xFF0).or(byte.toShort().rotateLeft(8)) //CONSOLE
+            0x00 -> callbackVector = callbackVector.replaceUpperByte(byte)
+            0x01 -> callbackVector = callbackVector.replaceLowerByte(byte)
             0x02 -> read = byte
             0x07 -> type = byte
             0x08 -> {

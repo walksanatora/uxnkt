@@ -11,7 +11,7 @@ fun main(args: Array<String>) {
     val ram = ByteArray(0x10000)
     val rom = args.firstOrNull()?: run {
         System.setProperty("debug","")
-        "output.rom"
+        "cpy.rom"
     }
     val orom = Path("statdump")
     if (System.getProperty("debug")!=null) {
@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
             gson.toJson(varvara.cpu.executionLog.last())
         )
     } else {
-        varvara.cpu.dumpExecTo(orom)
+        varvara.cpu.dumpFrames(orom)
     }
 
 }
