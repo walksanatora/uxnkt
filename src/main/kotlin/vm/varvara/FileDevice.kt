@@ -7,7 +7,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
 
-class FileDevice(val root: Path) : Device() {
+class FileDevice(var root: Path) : Device() {
     var holder: File? = null
 
     constructor() : this(Path(".").absolute())

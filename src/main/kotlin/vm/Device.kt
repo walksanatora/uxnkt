@@ -1,7 +1,5 @@
 package net.walksanator.uxnkt.vm
 
-import Computer
-
 open class Device {
 
     /**

@@ -1,4 +1,5 @@
-import net.walksanator.uxnkt.vm.Uxn
+package net.walksanator.uxnkt.vm
+
 import java.util.function.Consumer
 
 abstract class Computer(val cpu: Uxn) {

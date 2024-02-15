@@ -1,8 +1,7 @@
 package net.walksanator.uxnkt.vm.varvara
 
-import Computer
+import net.walksanator.uxnkt.vm.Computer
 import net.walksanator.uxnkt.vm.Uxn
-import java.util.*
 import java.util.function.Consumer
 import kotlin.collections.ArrayDeque
 
