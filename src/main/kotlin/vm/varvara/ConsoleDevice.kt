@@ -5,9 +5,10 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class ConsoleDevice : Device() {
-    private var callbackVector: Short = 0x0000
-    private var read: Byte = 0x00
-    private var type: Byte = 0x00
+    var callbackVector: Short = 0x0000
+        private set
+    var read: Byte = 0x00
+    var type: Byte = 0x00
     private var write: Byte  = 0x00
     private var error: Byte = 0x00
     override fun readByte(address: Byte): Byte {
@@ -34,7 +35,10 @@ class ConsoleDevice : Device() {
                 write = byte
                 print(Char(byte.toInt()))
             }
-            0x09 -> error = byte
+            0x09 -> {
+                error = byte
+                System.err.print(Char(byte.toInt()))
+            }
             0x03, 0x04, 0x05, 0x06, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F -> super.writeByte(address, byte)
         }
     }

@@ -13,7 +13,7 @@ open class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
     val file1 = FileDevice()
     val file2 = FileDevice()
 
-    private val eventQueue: ArrayDeque<Pair<Short, Consumer<Computer>>> = ArrayDeque()
+    private val eventQueue: ArrayDeque<Consumer<Computer>> = ArrayDeque()
     var consumeFuel = true
 
     init {
@@ -30,8 +30,7 @@ open class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
             if (res) {
                 if (eventQueue.size > 0){
                     val event = eventQueue.removeLast()
-                    cpu.pc = event.first
-                    event.second.accept(this)
+                    event.accept(this)
                 } else {
                     break
                 }
@@ -40,7 +39,7 @@ open class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
         }
     }
 
-    override fun queue(startpos: Short, prerun: Consumer<Computer>) {
-        eventQueue.addFirst(Pair(startpos,prerun))
+    override fun queue(prerun: Consumer<Computer>) {
+        eventQueue.addFirst(prerun)
     }
 }

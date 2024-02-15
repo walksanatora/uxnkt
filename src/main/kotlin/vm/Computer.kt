@@ -7,10 +7,10 @@ abstract class Computer(val cpu: Uxn) {
     /**
      * enqueues a event
      *
-     * @param startpos the instruction to start execution at
      * @param prerun a consumer to run before starting the UXN cpu (eg: setting device values or dumping some values into memory)
+     * @param prerun should also set PC to the desired vector
      */
-    abstract fun queue(startpos: Short, prerun: Consumer<Computer>)
+    abstract fun queue(prerun: Consumer<Computer>)
 
     /**
      * runs the computer until it halts (BRK instr) or defers (eg: runs out of fuel)
