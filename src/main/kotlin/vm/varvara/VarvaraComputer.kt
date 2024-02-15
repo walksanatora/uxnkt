@@ -6,7 +6,7 @@ import java.util.*
 import java.util.function.Consumer
 import kotlin.collections.ArrayDeque
 
-class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
+open class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
 
     val system = SystemDevice(cpu)
     val console = ConsoleDevice()
@@ -29,7 +29,9 @@ class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
         while (fuel > 0) {
             val res = cpu.step()
             if (res) {
-                break //CPU signaled no more instructions (BRK) so we exit
+                val event = eventQueue.removeLast()
+                cpu.pc = event.first
+                event.second.accept(this)
             }
             if (consumeFuel) {fuel -= 1}
         }
