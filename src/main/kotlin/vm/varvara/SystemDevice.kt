@@ -5,16 +5,16 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class SystemDevice(val uxn: Uxn) : Device() {
-    var lastExpansion: Short = 0x000
-    var metadataLocation: Short = 0x000// probally later could parse this location for enabling bonus VM features perhaps
+    private var lastExpansion: Short = 0x000
+    private var metadataLocation: Short = 0x000// probally later could parse this location for enabling bonus VM features perhaps
 
-    var sysRed: Short = 0x000F
-    var sysBlue: Short = 0xFF77.toShort()
-    var sysGreen: Short = 0x7777
+    private var sysRed: Short = 0x000F
+    private var sysBlue: Short = 0xFF77.toShort()
+    private var sysGreen: Short = 0x7777
 
     var state: Byte = 0x0 //literally exitcode
 
-    var runExpansionFunction = false
+    private var runExpansionFunction = false
 
     override fun readByte(address: Byte): Byte {
         return when (address.toInt()) {

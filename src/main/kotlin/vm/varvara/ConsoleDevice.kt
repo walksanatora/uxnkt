@@ -5,11 +5,11 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class ConsoleDevice : Device() {
-    var callbackVector: Short = 0x0000
-    var read: Byte = 0x00
-    var type: Byte = 0x00
-    var write: Byte  = 0x00
-    var error: Byte = 0x00
+    private var callbackVector: Short = 0x0000
+    private var read: Byte = 0x00
+    private var type: Byte = 0x00
+    private var write: Byte  = 0x00
+    private var error: Byte = 0x00
     override fun readByte(address: Byte): Byte {
         return when (address.toInt()) {
             0x00 -> callbackVector.toBytes().first  //CONSOLE callback vector upper half

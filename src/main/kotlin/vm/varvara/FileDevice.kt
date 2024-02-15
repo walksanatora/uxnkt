@@ -12,22 +12,22 @@ class FileDevice(var root: Path) : Device() {
 
     constructor() : this(Path(".").absolute())
 
-    var success: Short = 0x0000
-    var stat: Short = 0x0000
-    var delete: Byte = 0x00
-    var append: Byte = 0x00
-    var nameptr: Short = 0x0000 // pointer to a null-terminated string for path
-    var length: Short = 0x0000
-    var read: Short = 0x0000
-    var write: Short = 0x0000
+    private var success: Short = 0x0000
+    private var stat: Short = 0x0000
+    private var delete: Byte = 0x00
+    private var append: Byte = 0x00
+    private var nameptr: Short = 0x0000 // pointer to a null-terminated string for path
+    private var length: Short = 0x0000
+    private var read: Short = 0x0000
+    private var write: Short = 0x0000
 
-    var open_file = false
-    var delete_file = false
-    var read_file = false
-    var write_file = false
+    private var open_file = false
+    private var delete_file = false
+    private var read_file = false
+    private var write_file = false
 
-    var file_bytes: MutableList<Byte>? = null
-    var first_write = true
+    private var file_bytes: MutableList<Byte>? = null
+    private var first_write = true
 
     override fun writeByte(address: Byte, byte: Byte) {
         when(address.toInt()) {
