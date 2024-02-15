@@ -6,8 +6,22 @@ import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
+import kotlin.io.path.isDirectory
 
-class FileDevice(var root: Path) : Device() {
+class FileDevice(root: Path) : Device() {
+    var root: Path = run {
+        var field = root.absolute().normalize()
+        if (!field.isDirectory()) {
+            field = field.parent //since everything must be in a directory
+        }
+        return@run field
+    }
+        set(value) {
+            field = value.absolute().normalize()
+            if (!field.isDirectory()) {
+                field = field.parent //since everything must be in a directory
+            }
+        }
     var holder: File? = null
 
     constructor() : this(Path(".").absolute())
@@ -95,15 +109,15 @@ class FileDevice(var root: Path) : Device() {
                 )
                 offset += 1
             }
-            val file = File(sbuf.toString())
+            val file = root.resolve(sbuf.toString())
             file_bytes = null
-            if (!file.toPath().absolute().startsWith(root.parent)) {// file is not within our root so it is illegal
+            if (!file.absolute().normalize().startsWith(root.absolute().normalize())) {// file is not within our root so it is illegal
                 success = 0x0000
                 holder = null
                 length = 0x0000
             } else {
                 success = 0x0001
-                holder = file
+                holder = file.toFile()
                 length = if (holder!!.length() > UShort.MAX_VALUE.toLong()) {
                     0xFFFF.toShort()
                 } else { holder!!.length().toShort() }
@@ -159,7 +173,7 @@ class FileDevice(var root: Path) : Device() {
             read_file = false
         }
         if (write_file) {
-            if (holder?.isFile == true) {
+            if (holder?.isFile == true || (holder?.exists() == false) ) {
                 if (append.toInt() != 0) {
                     val ba = mutableListOf<Byte>()
                     for (i in 0..<length.unsign()) {
@@ -176,6 +190,9 @@ class FileDevice(var root: Path) : Device() {
                         )
                     }
                     if (first_write) {
+                        if (!holder!!.exists()) {
+                            holder!!.createNewFile()
+                        }
                         holder!!.writeBytes(ba.toByteArray())
                         first_write = false
                     } else {

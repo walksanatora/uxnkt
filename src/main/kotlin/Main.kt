@@ -4,10 +4,12 @@ import com.google.gson.GsonBuilder
 import net.walksanator.uxnkt.vm.varvara.VarvaraComputer
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
+
     val ram = ByteArray(0x10000)
     val rom = args.firstOrNull()?: run {
         System.setProperty("debug","")

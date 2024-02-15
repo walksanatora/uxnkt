@@ -28,9 +28,13 @@ open class VarvaraComputer(ram: ByteArray, var fuel: Int) : Computer(Uxn(ram)) {
         while (fuel > 0) {
             val res = cpu.step()
             if (res) {
-                val event = eventQueue.removeLast()
-                cpu.pc = event.first
-                event.second.accept(this)
+                if (eventQueue.size > 0){
+                    val event = eventQueue.removeLast()
+                    cpu.pc = event.first
+                    event.second.accept(this)
+                } else {
+                    break
+                }
             }
             if (consumeFuel) {fuel -= 1}
         }
