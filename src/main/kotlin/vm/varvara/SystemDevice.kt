@@ -74,7 +74,23 @@ open class SystemDevice(val uxn: Uxn, val bonusPages: List<WrappingByteArray>) :
         if (runExpansionFunction) {
             val instr = uxn.ram[lastExpansion]
             when (instr.toUByte().toInt()) {
-                0x01 -> /*copy*/ {
+                0x00 -> /* fill */ {
+                    val length = uxn.ram[lastExpansion + 1].msbToShort(uxn.ram[lastExpansion + 2]).unsign()
+                    val bank = uxn.ram[lastExpansion + 3].msbToShort(uxn.ram[lastExpansion + 4]).unsign()
+                    val startaddr = uxn.ram[lastExpansion + 5].msbToShort(uxn.ram[lastExpansion + 6]).unsign()
+                    val data = uxn.ram[lastExpansion + 6]
+
+                    //perform bounds check
+                    if (bank > bonusPages.size) {
+                        return //we cannot access pages which dont exists
+                    }
+                    val target = if (bank == 0) {uxn.ram} else {bonusPages[bank-1]}
+
+                    for (i in 0..< length) {
+                        target[startaddr + i] = data
+                    }
+                }
+                0x01 -> /* cpyl */ {
                     // get variables
                     val length = uxn.ram[lastExpansion + 1].msbToShort(uxn.ram[lastExpansion + 2]).unsign()
                     val src_bank = uxn.ram[lastExpansion + 3].msbToShort(uxn.ram[lastExpansion + 4]).unsign()
@@ -93,6 +109,27 @@ open class SystemDevice(val uxn: Uxn, val bonusPages: List<WrappingByteArray>) :
                     // memcpy
                     for (i in 0..< length) {
                         dst_page[dst_addr + i] = src_page[src_addr + i]
+                    }
+                }
+                0x02 -> /* cpyr */ {
+                    // get variables
+                    val length = uxn.ram[lastExpansion + 1].msbToShort(uxn.ram[lastExpansion + 2]).unsign()
+                    val src_bank = uxn.ram[lastExpansion + 3].msbToShort(uxn.ram[lastExpansion + 4]).unsign()
+                    val src_addr = uxn.ram[lastExpansion + 5].msbToShort(uxn.ram[lastExpansion + 6]).unsign()
+                    val dst_bank = uxn.ram[lastExpansion + 7].msbToShort(uxn.ram[lastExpansion + 8]).unsign()
+                    val dst_addr = uxn.ram[lastExpansion + 9].msbToShort(uxn.ram[lastExpansion + 10]).unsign()
+
+                    //perform bounds check
+                    if (src_bank > bonusPages.size || dst_bank > bonusPages.size) {
+                        return //we cannot access pages which dont exists
+                    }
+
+                    // load pages into variables
+                    val src_page = if (src_bank == 0) {uxn.ram} else {bonusPages[src_bank-1]}
+                    val dst_page = if (dst_bank == 0) {uxn.ram} else {bonusPages[dst_bank-1]}
+                    // memcpy
+                    for (i in 0..< length) {
+                        dst_page[dst_addr + length - i] = src_page[src_addr + length - i]
                     }
                 }
                 else -> {}
