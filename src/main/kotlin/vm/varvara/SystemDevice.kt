@@ -4,8 +4,17 @@ import net.walksanator.uxnkt.vm.*
 import kotlin.experimental.and
 import kotlin.experimental.or
 
-class SystemDevice(val uxn: Uxn) : Device() {
-    private var lastExpansion: Short = 0x000
+open class SystemDevice(val uxn: Uxn, val bonusPages: List<WrappingByteArray>) : Device() {
+
+    constructor(uxn: Uxn) : this(uxn, listOf())
+    constructor(uxn: Uxn, bonusPages: Int) : this(uxn, List(bonusPages) {
+        WrappingByteArray(
+            0x10000
+        )
+    })
+
+
+    protected var lastExpansion: Short = 0x000
     private var metadataLocation: Short = 0x000// probally later could parse this location for enabling bonus VM features perhaps
 
     private var sysRed: Short = 0x000F
@@ -14,7 +23,7 @@ class SystemDevice(val uxn: Uxn) : Device() {
 
     var state: Byte = 0x0 //literally exitcode
 
-    private var runExpansionFunction = false
+    protected var runExpansionFunction = false
 
     override fun readByte(address: Byte): Byte {
         return when (address.toInt()) {
@@ -66,16 +75,24 @@ class SystemDevice(val uxn: Uxn) : Device() {
             val instr = uxn.ram[lastExpansion]
             when (instr.toUByte().toInt()) {
                 0x01 -> /*copy*/ {
+                    // get variables
                     val length = uxn.ram[lastExpansion + 1].msbToShort(uxn.ram[lastExpansion + 2]).unsign()
                     val src_bank = uxn.ram[lastExpansion + 3].msbToShort(uxn.ram[lastExpansion + 4]).unsign()
                     val src_addr = uxn.ram[lastExpansion + 5].msbToShort(uxn.ram[lastExpansion + 6]).unsign()
                     val dst_bank = uxn.ram[lastExpansion + 7].msbToShort(uxn.ram[lastExpansion + 8]).unsign()
                     val dst_addr = uxn.ram[lastExpansion + 9].msbToShort(uxn.ram[lastExpansion + 10]).unsign()
-                    if (src_bank != 0 || dst_bank != 0) {
-                        return //the default impl does not have any other banks
+
+                    //perform bounds check
+                    if (src_bank > bonusPages.size || dst_bank > bonusPages.size) {
+                        return //we cannot access pages which dont exists
                     }
+
+                    // load pages into variables
+                    val src_page = if (src_bank == 0) {uxn.ram} else {bonusPages[src_bank-1]}
+                    val dst_page = if (dst_bank == 0) {uxn.ram} else {bonusPages[dst_bank-1]}
+                    // memcpy
                     for (i in 0..< length) {
-                        uxn.ram[dst_addr + i] = uxn.ram[src_addr + i]
+                        dst_page[dst_addr + i] = src_page[src_addr + i]
                     }
                 }
                 else -> {}

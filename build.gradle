@@ -14,6 +14,7 @@ dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
     implementation shadow("org.jetbrains.kotlin:kotlin-stdlib")
     implementation shadow("com.google.code.gson:gson:2.10.1")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 jar {
     manifest {

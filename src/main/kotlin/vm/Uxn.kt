@@ -117,7 +117,7 @@ class Uxn(val ram: WrappingByteArray) {
     var pc: Short = 0x100
     val ws = Stack() // Working net.walksanator.uxnkt.vm.Stack
     val rs = Stack() // Run net.walksanator.uxnkt.vm.Stack
-    var devices = Array<Device>(16) { Device() }
+    var devices = Array<IDevice>(16) { Device() }
 
     val executionLog: MutableList<ExecutionState> = mutableListOf()
 
@@ -148,7 +148,7 @@ class Uxn(val ram: WrappingByteArray) {
         )
     }
 
-    fun getDevice(addr: Byte): Device = devices[addr.and(0xF0.toByte()).rotateRight(4).toInt()]
+    fun getDevice(addr: Byte): IDevice = devices[addr.and(0xF0.toByte()).rotateRight(4).toInt()]
 
     /**
      * steps VM execution by one instruction

@@ -7,8 +7,7 @@ abstract class Computer(val cpu: Uxn) {
     /**
      * enqueues a event
      *
-     * @param prerun a consumer to run before starting the UXN cpu (eg: setting device values or dumping some values into memory)
-     * @param prerun should also set PC to the desired vector
+     * @param prerun a consumer to run before starting the UXN cpu (eg: setting device values or dumping some values into memory)<br> should also set PC to the desired vector
      */
     abstract fun queue(prerun: Consumer<Computer>)
 
