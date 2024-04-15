@@ -14,6 +14,7 @@ class CalendarDevice : Device() {
                 0x02 -> cal.get(Calendar.MONTH).toShort().toByte()
                 0x03 -> cal.get(Calendar.DAY_OF_MONTH).toByte()
                 0x04 -> cal.get(Calendar.HOUR).toByte()
+                else -> super.readByte(address)
          }
     }
 }
