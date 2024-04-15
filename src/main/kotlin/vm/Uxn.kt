@@ -7,17 +7,17 @@ import kotlin.experimental.or
 import kotlin.experimental.xor
 import kotlin.math.absoluteValue
 
-class WrappingByteArray(private val wrapped: ByteArray) {
-     val size: Int
+open class WrappingByteArray(protected val wrapped: ByteArray) {
+    val size: Int
         get() = wrapped.size
     constructor(size: Int) : this(ByteArray(size))
     operator fun get(idx: Int) = wrapped[idx.toUShort().toInt() % wrapped.size]
     operator fun set(idx: Int, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
     operator fun get(idx: Short) = wrapped[idx.toUShort().toInt() % wrapped.size]
     operator fun set(idx: Short, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
-    fun inner(): ByteArray = wrapped
+    fun inner() = wrapped
 }
-class Stack : Cloneable {
+open class Stack : Cloneable {
     @Expose var s = ByteArray(0x100) //stack
     @Expose var sp: Short = 0 //stack pointer
         set(v) {
@@ -108,7 +108,6 @@ data class ExecutionState(
         result = 31 * result + ram.contentHashCode()
         return result
     }
-
 }
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -123,7 +122,7 @@ class Uxn(val ram: WrappingByteArray) {
 
     init {
         if (ram.size < 0x10000) {
-            throw IllegalArgumentException("ram must be atleast 0x10000 bytes. it is currently %s".format(ram.size.toHexString()))
+            throw IllegalArgumentException("ram must be at least 0x10000 bytes. it is currently %s".format(ram.size.toHexString()))
         }
     }
 
