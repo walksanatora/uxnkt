@@ -11,13 +11,13 @@ open class WrappingByteArray(protected val wrapped: ByteArray) {
     val size: Int
         get() = wrapped.size
     constructor(size: Int) : this(ByteArray(size))
-    operator fun get(idx: Int) = wrapped[idx.toUShort().toInt() % wrapped.size]
-    operator fun set(idx: Int, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
-    operator fun get(idx: Short) = wrapped[idx.toUShort().toInt() % wrapped.size]
-    operator fun set(idx: Short, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
+    open operator fun get(idx: Int) = wrapped[idx.toUShort().toInt() % wrapped.size]
+    open operator fun set(idx: Int, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
+    open operator fun get(idx: Short) = wrapped[idx.toUShort().toInt() % wrapped.size]
+    open operator fun set(idx: Short, v: Byte) {wrapped[idx.toUShort().toInt() % wrapped.size] = v}
     fun inner() = wrapped
 }
-open class Stack : Cloneable {
+class Stack : Cloneable {
     @Expose var s = ByteArray(0x100) //stack
     @Expose var sp: Short = 0 //stack pointer
         set(v) {
@@ -31,7 +31,7 @@ open class Stack : Cloneable {
         }
     var spr: Short = 0
 
-     public override fun clone(): Stack {
+    public override fun clone(): Stack {
          val new = Stack()
          new.s = s.clone()
          new.sp = sp
@@ -111,7 +111,7 @@ data class ExecutionState(
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-class Uxn(val ram: WrappingByteArray) {
+open class Uxn(val ram: WrappingByteArray) {
     constructor(ba: ByteArray): this(WrappingByteArray(ba))
     var pc: Short = 0x100
     val ws = Stack() // Working net.walksanator.uxnkt.vm.Stack
@@ -126,7 +126,7 @@ class Uxn(val ram: WrappingByteArray) {
         }
     }
 
-    fun dumpFrames(file: Path) {
+    open fun dumpFrames(file: Path) {
         val gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
         for ((i,frame) in executionLog.withIndex()) {
             val dump = file.resolve("frame_%s.json".format(i)).toFile()
@@ -138,7 +138,7 @@ class Uxn(val ram: WrappingByteArray) {
         }
     }
 
-    fun captureFrame() {
+    open fun captureFrame() {
         executionLog.add(
             ExecutionState(
                 pc,
